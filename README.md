@@ -1,2 +1,4 @@
 # mum
-M(ostly) U(seless) M(essaging)
+Mostly
+Useless
+Messaging
