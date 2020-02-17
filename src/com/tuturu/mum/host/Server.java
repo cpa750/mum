@@ -15,7 +15,7 @@ public class Server
     public static void main(String[] args)
     {
         int port = Integer.parseInt(args[0]);
-        try ( ServerSocket serverSocket = new ServerSocket(port); )
+        try ( ServerSocket serverSocket = new ServerSocket(port) )
         {
             while (true)
             {
@@ -32,7 +32,7 @@ public class Server
                 {
                     ClientThread clientThread =
                             new ClientThread(clientSocket, in, out, username);
-                    new Thread(clientThread);
+                    new Thread(clientThread).start();
                 }
                 else
                 {

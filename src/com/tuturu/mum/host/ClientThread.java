@@ -11,7 +11,7 @@ class ClientThread implements java.lang.Runnable
     private final Socket clientSocket;
     private final DataInputStream in;
     private final DataOutputStream out;
-    private String username;
+    private final String username;
     private String rec;
     private boolean connected = true;
 
@@ -26,14 +26,31 @@ class ClientThread implements java.lang.Runnable
         Server.clients.put(username, this);
     }
 
-    private void recievedMessage()
+    private void receivedMessage()
+    {
+        System.out.format("%s: %s\n", this.username, this.rec);
+        if (this.getMessageType(this.rec).equals("USR_MSG"))
+            this.sendToAllClients(this.getMessageContent(this.rec));
+    }
+
+    private void sendToAllClients(String message)
     {
         for (Map.Entry<String, ClientThread> entry: Server.clients.entrySet())
         {
             ClientThread c = entry.getValue();
             if (c != this)
-                c.sendToClient(this.rec);
+                c.sendToClient(message);
         }
+    }
+
+    private String getMessageType(String message)
+    {
+        return message.split(",")[0];
+    }
+
+    private String getMessageContent(String message)
+    {
+        return message.split(",")[2];
     }
 
     private boolean isCommand(String s)
@@ -52,7 +69,7 @@ class ClientThread implements java.lang.Runnable
             {
                 rec = in.readUTF();
                 if (this.isCommand(this.rec)) this.parseCommand(this.rec);
-                else this.recievedMessage();
+                else this.receivedMessage();
             }
             catch (IOException e)
             {
