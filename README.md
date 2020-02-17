@@ -1,4 +1,0 @@
-# mum
-Mostly
-Useless
-Messaging

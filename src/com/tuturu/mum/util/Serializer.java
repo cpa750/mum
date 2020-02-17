@@ -1,4 +1,4 @@
-package mum;
+package com.tuturu.mum.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,7 +16,7 @@ public class Serializer {
             {
                 o.writeObject(obj);
             }
-        return b.toByteArray();
+            return b.toByteArray();
         }
     }
 
@@ -30,6 +30,4 @@ public class Serializer {
             }
         }
     }
-
 }
-
