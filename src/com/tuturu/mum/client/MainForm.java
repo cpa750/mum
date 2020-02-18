@@ -23,7 +23,7 @@ public class MainForm extends JFrame
     private JScrollPane messageScrollPane;
     private JPanel messagePanel;
 
-    private final Client client = new Client();
+    private final Client client = new Client(this.messageArea);
 
     public static void main(String[] args) {
         new MainForm().createUIComponents();
@@ -54,17 +54,17 @@ public class MainForm extends JFrame
             @Override
             public void actionPerformed(ActionEvent actionEvent)
             {
-                messageArea.append(messageTextField.getText() + '\n');
-                messageArea.setRows(messageArea.getRows() + 1);
                 try
                 {
+                    System.out.println(usernameField.getText());
                     client.connect(hostnameField.getText(),
                                    Integer.parseInt(portField.getText()),
                                    usernameField.getText());
+                    messageArea.append("Connected!\n");
                 }
                 catch (IOException e)
                 {
-                    messageArea.append(e.getMessage());
+                    messageArea.append(e.getMessage() + '\n');
                 }
             }
         });
@@ -77,16 +77,16 @@ public class MainForm extends JFrame
             @Override
             public void actionPerformed(ActionEvent actionEvent)
             {
-                messageArea.append(messageTextField.getText() + '\n');
-                messageArea.setRows(messageArea.getRows() + 1);
-                messageTextField.setText("");
                 try
                 {
                     client.sendMessage("USR_MSG", messageTextField.getText());
+                    messageArea.append(messageTextField.getText() + '\n');
+                    messageArea.setRows(messageArea.getRows() + 1);
+                    messageTextField.setText("");
                 }
                 catch (IOException e)
                 {
-                    messageArea.append(e.getMessage());
+                    messageArea.append(e.getMessage() + '\n');
                 }
             }
         });
@@ -101,17 +101,18 @@ public class MainForm extends JFrame
             @Override
             public void keyReleased(KeyEvent keyEvent)
             {
-                if(keyEvent.getKeyCode() == Event.ENTER && !messageTextField.getText().isEmpty()) {
-                    messageArea.append("You: " + messageTextField.getText() + '\n');
-                    messageArea.setRows(messageArea.getRows() + 1);
-                    messageTextField.setText("");
+                if(keyEvent.getKeyCode() == Event.ENTER &&
+                        !messageTextField.getText().isEmpty()) {
                     try
                     {
                         client.sendMessage("USR_MSG", messageTextField.getText());
+                        messageArea.append("You: " + messageTextField.getText() + '\n');
+                        messageArea.setRows(messageArea.getRows() + 1);
+                        messageTextField.setText("");
                     }
                     catch (IOException e)
                     {
-                        messageArea.append(e.getMessage());
+                        messageArea.append(e.getMessage() + '\n');
                     }
                 }
             }

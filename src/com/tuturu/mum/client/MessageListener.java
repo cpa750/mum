@@ -1,5 +1,6 @@
 package com.tuturu.mum.client;
 
+import javax.swing.*;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -9,10 +10,12 @@ public class MessageListener implements java.lang.Runnable
 {
     private final DataInputStream in;
     private final Queue<String> messages = new LinkedList<>();
+    private final JTextArea messageArea;
 
-    public MessageListener(DataInputStream din)
+    public MessageListener(DataInputStream din, JTextArea messageArea)
     {
         this.in = din;
+        this.messageArea = messageArea;
     }
     public void run()
     {
@@ -31,11 +34,10 @@ public class MessageListener implements java.lang.Runnable
     }
     private void receivedMessage(String message)
     {
-        this.messages.add(message);
-        if (this.messages.size() > 50) this.messages.remove();
-
-        // Clears the console
-        System.out.print("\033[H\033[2J");
-        for (String s: this.messages) System.out.println(s);
+        System.out.println(message);
+        String[] splitMessage = message.split(",", 3);
+        String username = splitMessage[1];
+        String content = splitMessage[2];
+        this.messageArea.append(username + ": " + content + '\n');
     }
 }

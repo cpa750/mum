@@ -24,19 +24,23 @@ public class Server
                 DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
 
                 // Message format: type,username,content
-                String[] split = in.readUTF().split(",", 2);
+                String rec = in.readUTF();
+                System.out.println(rec);
+                String[] split = rec.split(",", 3);
                 String messageType = split[0];
                 String username = split[1];
 
                 if (messageType.equals("CONN_REQ") && !clients.containsKey(username))
                 {
+                    out.writeUTF("CONN_ACCEPT,Server,pong");
+                    out.flush();
                     ClientThread clientThread =
                             new ClientThread(clientSocket, in, out, username);
                     new Thread(clientThread).start();
                 }
                 else
                 {
-                    out.writeUTF("CONN_REFUSED" + "," + "Server" + "Non-unique username");
+                    out.writeUTF("CONN_REFUSED,Server,Non-unique username");
                     out.flush();
                 }
             } while (clients.size() > 0);

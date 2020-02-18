@@ -28,9 +28,11 @@ class ClientThread implements java.lang.Runnable
 
     private void receivedMessage()
     {
-        System.out.format("%s: %s\n", this.username, this.rec);
+        System.out.println(this.rec);
+        System.out.format("%s: %s\n", this.rec.split(",", 3)[1],
+                          this.rec.split(",",3)[2]);
         if (this.getMessageType(this.rec).equals("USR_MSG"))
-            this.sendToAllClients(this.getMessageContent(this.rec));
+            this.sendToAllClients(this.rec);
     }
 
     private void sendToAllClients(String message)
@@ -50,7 +52,14 @@ class ClientThread implements java.lang.Runnable
 
     private String getMessageContent(String message)
     {
-        return message.split(",")[2];
+        try
+        {
+            return message.split(",", 3)[2];
+        }
+        catch (ArrayIndexOutOfBoundsException e)
+        {
+            return "";
+        }
     }
 
     private boolean isCommand(String s)
@@ -61,13 +70,12 @@ class ClientThread implements java.lang.Runnable
     @Override
     public void run()
     {
-        this.sendToClient("CONN_ACCEPT" + "," + "Server" + "," + "");
         while (this.connected &&
                 this.isAlive())
         {
             try
             {
-                rec = in.readUTF();
+                this.rec = in.readUTF();
                 if (this.isCommand(this.rec)) this.parseCommand(this.rec);
                 else this.receivedMessage();
             }
