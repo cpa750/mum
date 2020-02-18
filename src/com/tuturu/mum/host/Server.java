@@ -17,7 +17,7 @@ public class Server
         int port = Integer.parseInt(args[0]);
         try ( ServerSocket serverSocket = new ServerSocket(port) )
         {
-            while (true)
+            do
             {
                 Socket clientSocket = serverSocket.accept();
                 DataInputStream in = new DataInputStream(clientSocket.getInputStream());
@@ -36,15 +36,14 @@ public class Server
                 }
                 else
                 {
-                    out.writeUTF("CONN_REFUSED" + "," + "Server" + "");
+                    out.writeUTF("CONN_REFUSED" + "," + "Server" + "Non-unique username");
                     out.flush();
                 }
-            }
+            } while (clients.size() > 0);
         }
         catch (IOException e)
         {
             e.printStackTrace();
         }
     }
-
-};
+}

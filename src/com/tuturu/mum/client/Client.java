@@ -5,67 +5,59 @@ import java.net.Socket;
 
 public class Client
 {
-    public static void main(String[] args)
+    private String username;
+    private final Thread messageListener;
+    private final DataInputStream in;
+    private final DataOutputStream out;
+
+    public Client(String hostname, int port, String username) throws IOException
     {
-        String hostname = args[0];
-        int port = Integer.parseInt(args[1]);
-        Client c = new Client();
-        c.run(hostname, port);
+        Socket server = new Socket(hostname, port);
+        this.in = new DataInputStream(server.getInputStream());
+        this.out = new DataOutputStream(server.getOutputStream());
+        this.setUsername(username);
+        this.messageListener = new Thread(
+                new MessageListener(in)
+        );
+        messageListener.start();
     }
 
-    private void run(String hostname, int port)
+    public void disconnect()
     {
-        try (
-                Socket server = new Socket(hostname, port);
-                DataInputStream in = new DataInputStream(server.getInputStream());
-                DataOutputStream out = new DataOutputStream(server.getOutputStream());
-                BufferedReader userIn = new BufferedReader(
-                        new InputStreamReader(System.in))
-        )
+        this.messageListener.interrupt();
+        try
         {
-            String username = this.setUsername(userIn, out, in);
-            System.out.format("Client connected to %s:%d\n", hostname, port);
-            Thread messageListener = new Thread(
-                    new MessageListener(in)
-            );
-            messageListener.start();
-
-            String msg;
-            do
-            {
-                System.out.print("You: ");
-                msg = userIn.readLine();
-                sendMessage(out, "USR_MSG", username, msg);
-            } while (!msg.equals("/disconnect"));
-            messageListener.interrupt();
+            this.in.close();
+            this.out.close();
         }
         catch (IOException e)
         {
             System.err.format("Error: %s", e.getMessage());
         }
-
     }
 
     private void sendMessage(DataOutputStream out, String mType,
-                             String username, String content) throws IOException
+                             String content) throws IOException
     {
-        String message = mType + "," + username + "," + content;
+        String message = mType + "," + this.username + "," + content;
         out.writeUTF(message);
         out.flush();
     }
 
-    private String setUsername(BufferedReader userIn, DataOutputStream out,
-                               DataInputStream in) throws IOException
+    private void setUsername(String username) throws IOException
     {
-        String username;
-        String[] rec;
-        do
-        {
-            System.out.print("Enter username: ");
-            username = userIn.readLine();
-            sendMessage(out, "CONN_REQ", username, "");
-            rec = in.readUTF().split(",", 2);
-        } while (!rec[0].equals("CONN_ACCEPT"));
-        return username;
+        this.sendMessage(this.out, "CONN_REQ", "");
+        String[] res = this.in.readUTF().split(",", 2);
+        String res_type = res[0];
+        String res_message = res[2];
+
+        if (res_type.equals("CONN_REFUSED"))
+            throw new IOException("Error: connection refused - "+res_message);
+        else if (res_type.equals("CONN_ACCEPT"))
+            this.username = username;
+        /*
+         * Successful connection to the server is dependent on
+         * whether the username is unique or not
+         */
     }
 }
