@@ -122,9 +122,4 @@ public class MainForm extends JFrame
         this.pack();
         this.setVisible(true);
     }
-
-    public void addMessage(String message)
-    {
-        this.messageArea.append(message);
-    }
 }
