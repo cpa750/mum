@@ -7,10 +7,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
 
+// TODO: rewrite this absolute mess
 public class Server
 {
-    public static ConcurrentHashMap<String, ClientThread> clients = new ConcurrentHashMap<>();
-    public static char commandPrefix = '/';
+    private ConcurrentHashMap<String, Socket> clients = new ConcurrentHashMap<>();
 
     public static void main(String[] args)
     {
