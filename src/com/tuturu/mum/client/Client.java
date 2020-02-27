@@ -1,5 +1,9 @@
 package com.tuturu.mum.client;
 
+import com.tuturu.mum.util.Message;
+import com.tuturu.mum.util.MessageStatus;
+import com.tuturu.mum.util.MessageType;
+
 import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
@@ -8,8 +12,8 @@ public class Client
 {
     private String username;
     private Thread messageListener;
-    private DataInputStream in;
-    private DataOutputStream out;
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
     private final JTextArea messageArea;
 
     public Client(JTextArea messageArea)
@@ -20,11 +24,11 @@ public class Client
     public void connect(String hostname, int port, String username) throws IOException
     {
         Socket server = new Socket(hostname, port);
-        this.in = new DataInputStream(server.getInputStream());
-        this.out = new DataOutputStream(server.getOutputStream());
+        this.in = new ObjectInputStream(server.getInputStream());
+        this.out = new ObjectOutputStream(server.getOutputStream());
         this.setUsername(username);
         this.messageListener = new Thread(
-                new MessageListener(in, this.messageArea)
+                new MessageListener(this.in, this.messageArea)
         );
         messageListener.start();
     }
@@ -34,45 +38,64 @@ public class Client
         this.messageListener.interrupt();
         try
         {
+            Message m = new Message(MessageStatus.OK,
+                                    MessageType.CONNECTION_END,
+                                    "", this.username);
+            this.out.writeObject(m);
             this.in.close();
             this.out.close();
         }
         catch (IOException e)
         {
-            System.err.format("Error: %s", e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    public void sendMessage(String mType, String content) throws IOException
+    public void sendMessage(String message) throws IOException
     {
-        String message = mType + "," + this.username + "," + content;
-        this.out.writeUTF(message);
-        this.out.flush();
-    }
-
-    public void sendMessage(String mType, String username,
-                            String content) throws IOException
-    {
-        String message = mType + "," + username + "," + content;
-        this.out.writeUTF(message);
-        this.out.flush();
+        if (message.charAt(0) == '/')
+            this.command(message.substring(1));
+        else {
+            Message m = new Message(MessageStatus.OK,
+                                    MessageType.MULTICHAT,
+                                    message, this.username);
+            this.out.writeObject(m);
+        }
     }
 
     private void setUsername(String username) throws IOException
     {
-        this.sendMessage("CONN_REQ", username, "ping");
-        String[] res = this.in.readUTF().split(",", 3);
-        for (String s : res) System.out.println(s);
-        String res_type = res[0];
-        String res_message = res[2];
+        Message m = new Message(MessageStatus.OK,
+                                MessageType.CONNECTION_REQUEST,
+                                "", this.username);
+        this.out.writeObject(m);
 
-        if (res_type.equals("CONN_REFUSED"))
-            throw new IOException("Error: connection refused - "/* + res_message*/);
-        else if (res_type.equals("CONN_ACCEPT"))
+        try {
+            m = (Message) this.in.readObject();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        if (m.getType() == MessageType.CONNECTION_ACCEPT)
             this.username = username;
+        else
+            throw new IOException("Error: connection refused");
         /*
-         * Successful connection to the server is dependent on
-         * whether the username is unique or not
+         * successful connection to the server depends on whether the
+         * requested username is unique or not
          */
+    }
+
+    private void command(String in) throws IOException
+    {
+        switch (in) {
+            case "dc":
+                this.disconnect();
+                break;
+            case "here":
+                Message m = new Message(MessageStatus.OK,
+                                        MessageType.COMMAND,
+                                        in, this.username);
+                this.out.writeObject(m);
+        }
     }
 }

@@ -17,6 +17,7 @@ class ClientThread implements java.lang.Runnable
     private final ObjectOutputStream out;
     private final ConcurrentHashMap<String, Socket> clients;
     private final Socket socket;
+    private String username;
 
     public ClientThread(Socket socket,
                         ConcurrentHashMap<String, Socket> clients)
@@ -37,15 +38,15 @@ class ClientThread implements java.lang.Runnable
     {
         try {
             Message message = (Message) this.in.readObject();
+            this.reply(message);
 
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void reply(Message rec) throws ClassNotFoundException, IOException
+    private void reply(Message rec) throws IOException
     {
-        Message message = (Message) this.in.readObject();
         MessageType mType = rec.getType();
         switch (mType) {
             case CONNECTION_REQUEST:
@@ -53,6 +54,9 @@ class ClientThread implements java.lang.Runnable
                 break;
             case MULTICHAT:
                 this.sendMultiChat(rec);
+                break;
+            case CONNECTION_END:
+                this.disconnect();
                 break;
         }
     }
@@ -62,10 +66,12 @@ class ClientThread implements java.lang.Runnable
         String username = rec.getContent();
         if (this.isValidUsername(username)) {
             this.clients.put(username, this.socket);
-            return new Message(MessageStatus.OK, MessageType.CONNECTION_ACCEPT, "");
+            this.username = username;
+            return new Message(MessageStatus.OK, MessageType.CONNECTION_ACCEPT,
+                               "", "Server");
         } else {
             return new Message(MessageStatus.ERROR, MessageType.CONNECTION_REFUSE,
-                               "Username not unique");
+                               "Username not unique", "Server");
         }
     }
 
@@ -80,6 +86,16 @@ class ClientThread implements java.lang.Runnable
                 }
         } catch (IOException e) {
                 e.printStackTrace();
+        }
+    }
+
+    private void disconnect()
+    {
+        try {
+            this.socket.close();
+            this.clients.remove(this.username);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

@@ -7,13 +7,17 @@ public class Message implements Serializable
     private final MessageStatus status;
     private final MessageType type;
     private final String content;
+    private final String username;
 
-    public Message(MessageStatus status, MessageType type, String content)
+    public Message(MessageStatus status, MessageType type,
+                   String content, String username)
     {
-        this.type = type;
         this.status = status;
+        this.type = type;
+        this.username = username;
         this.content = content;
     }
+
 
     public MessageStatus getStatus()
     {
@@ -28,5 +32,10 @@ public class Message implements Serializable
     public String getContent()
     {
         return content;
+    }
+
+    public String getUsername()
+    {
+        return username;
     }
 }

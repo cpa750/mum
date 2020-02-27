@@ -1,18 +1,17 @@
 package com.tuturu.mum.client;
 
+import com.tuturu.mum.util.Message;
+
 import javax.swing.*;
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.io.ObjectInputStream;
 
 public class MessageListener implements java.lang.Runnable
 {
-    private final DataInputStream in;
-    private final Queue<String> messages = new LinkedList<>();
+    private final ObjectInputStream in;
     private final JTextArea messageArea;
 
-    public MessageListener(DataInputStream din, JTextArea messageArea)
+    public MessageListener(ObjectInputStream din, JTextArea messageArea)
     {
         this.in = din;
         this.messageArea = messageArea;
@@ -23,21 +22,20 @@ public class MessageListener implements java.lang.Runnable
         {
             try
             {
-                String message = this.in.readUTF();
+                Message message = (Message) this.in.readObject();
                 this.receivedMessage(message);
             }
-            catch (IOException e)
+            catch (IOException | ClassNotFoundException e)
             {
-                System.err.println(e.getMessage());
+                e.printStackTrace();
             }
         }
     }
-    private void receivedMessage(String message)
+    private void receivedMessage(Message message)
     {
-        System.out.println(message);
-        String[] splitMessage = message.split(",", 3);
-        String username = splitMessage[1];
-        String content = splitMessage[2];
+        String content = message.getContent();
+        String username = message.getUsername();
+        System.out.println(username + ": " + content);
         this.messageArea.append(username + ": " + content + '\n');
     }
 }
