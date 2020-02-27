@@ -56,11 +56,9 @@ public class MainForm extends JFrame
             {
                 try
                 {
-                    System.out.println(usernameField.getText());
                     client.connect(hostnameField.getText(),
                                    Integer.parseInt(portField.getText()),
                                    usernameField.getText());
-                    messageArea.append("Connected!\n");
                 }
                 catch (IOException e)
                 {
@@ -79,8 +77,8 @@ public class MainForm extends JFrame
             {
                 try
                 {
-                    client.sendMessage("USR_MSG", messageTextField.getText());
-                    messageArea.append(messageTextField.getText() + '\n');
+                    client.sendMessage(messageTextField.getText());
+                    messageArea.append("You" + messageTextField.getText() + '\n');
                     messageArea.setRows(messageArea.getRows() + 1);
                     messageTextField.setText("");
                 }
@@ -105,7 +103,7 @@ public class MainForm extends JFrame
                         !messageTextField.getText().isEmpty()) {
                     try
                     {
-                        client.sendMessage("USR_MSG", messageTextField.getText());
+                        client.sendMessage(messageTextField.getText());
                         messageArea.append("You: " + messageTextField.getText() + '\n');
                         messageArea.setRows(messageArea.getRows() + 1);
                         messageTextField.setText("");

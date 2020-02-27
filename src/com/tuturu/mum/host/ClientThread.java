@@ -19,17 +19,13 @@ class ClientThread implements java.lang.Runnable
     private final Socket socket;
     private String username;
 
-    public ClientThread(Socket socket,
-                        ConcurrentHashMap<String, Socket> clients)
-                        throws IOException
+    public ClientThread(Socket socket, ObjectInputStream in,
+                        ObjectOutputStream out, ConcurrentHashMap<String,
+                        Socket> clients)
     {
         this.socket = socket;
-        this.in = new ObjectInputStream(
-                socket.getInputStream()
-        );
-        this.out = new ObjectOutputStream(
-                socket.getOutputStream()
-        );
+        this.in = in;
+        this.out = out;
         this.clients = clients;
     }
 
@@ -50,7 +46,9 @@ class ClientThread implements java.lang.Runnable
         MessageType mType = rec.getType();
         switch (mType) {
             case CONNECTION_REQUEST:
-                this.out.writeObject(this.newConnection(rec));
+                Message toSend = this.newConnection(rec);
+                this.out.writeObject(toSend);
+                this.out.flush();
                 break;
             case MULTICHAT:
                 this.sendMultiChat(rec);
@@ -63,7 +61,7 @@ class ClientThread implements java.lang.Runnable
 
     private Message newConnection(Message rec)
     {
-        String username = rec.getContent();
+        String username = rec.getUsername();
         if (this.isValidUsername(username)) {
             this.clients.put(username, this.socket);
             this.username = username;
@@ -83,6 +81,7 @@ class ClientThread implements java.lang.Runnable
                 ObjectOutputStream out = new ObjectOutputStream(
                         s.getOutputStream());
                 out.writeObject(rec);
+                out.flush();
                 }
         } catch (IOException e) {
                 e.printStackTrace();
@@ -101,6 +100,6 @@ class ClientThread implements java.lang.Runnable
 
     private boolean isValidUsername(String in)
     {
-        return this.clients.containsKey(in);
+        return !this.clients.containsKey(in);
     }
 }

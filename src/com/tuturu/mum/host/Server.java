@@ -1,6 +1,8 @@
 package com.tuturu.mum.host;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,10 +19,12 @@ public class Server
                 (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
         try ( ServerSocket serverSocket = new ServerSocket(port) )
         {
-            do {
+            while (true) {
                 Socket client = serverSocket.accept();
-                executor.execute( new ClientThread(client, clients) );
-            } while (clients.size() > 0);
+                ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
+                ObjectInputStream in = new ObjectInputStream(client.getInputStream());
+                executor.execute(new ClientThread(client, in, out, clients));
+            }
         }
         catch (IOException e)
         {

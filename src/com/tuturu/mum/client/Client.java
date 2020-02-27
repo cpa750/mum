@@ -24,9 +24,18 @@ public class Client
     public void connect(String hostname, int port, String username) throws IOException
     {
         Socket server = new Socket(hostname, port);
-        this.in = new ObjectInputStream(server.getInputStream());
-        this.out = new ObjectOutputStream(server.getOutputStream());
+        System.out.println("Socket started");
+        InputStream i = server.getInputStream();
+        OutputStream o = server.getOutputStream();
+        System.out.println("Got IOStreams");
+        try {
+            this.in = new ObjectInputStream(i);
+            this.out = new ObjectOutputStream(o);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         this.setUsername(username);
+        System.out.println("Username set");
         this.messageListener = new Thread(
                 new MessageListener(this.in, this.messageArea)
         );
@@ -42,6 +51,7 @@ public class Client
                                     MessageType.CONNECTION_END,
                                     "", this.username);
             this.out.writeObject(m);
+            this.out.flush();
             this.in.close();
             this.out.close();
         }
@@ -60,6 +70,8 @@ public class Client
                                     MessageType.MULTICHAT,
                                     message, this.username);
             this.out.writeObject(m);
+            this.out.flush();
+            System.out.println("Message written to socket");
         }
     }
 
@@ -67,18 +79,20 @@ public class Client
     {
         Message m = new Message(MessageStatus.OK,
                                 MessageType.CONNECTION_REQUEST,
-                                "", this.username);
+                                "", username);
         this.out.writeObject(m);
+        this.out.flush();
 
         try {
-            m = (Message) this.in.readObject();
+            Message rec = (Message) this.in.readObject();
+            if (rec.getType() == MessageType.CONNECTION_ACCEPT) {
+                this.username = username;
+                this.messageArea.append("Connected!");
+            } else
+                this.messageArea.append(rec.getUsername() + ": " + rec.getContent());
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        if (m.getType() == MessageType.CONNECTION_ACCEPT)
-            this.username = username;
-        else
-            throw new IOException("Error: connection refused");
         /*
          * successful connection to the server depends on whether the
          * requested username is unique or not
@@ -96,6 +110,7 @@ public class Client
                                         MessageType.COMMAND,
                                         in, this.username);
                 this.out.writeObject(m);
+                this.out.flush();
         }
     }
 }
